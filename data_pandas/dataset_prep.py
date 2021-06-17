@@ -3,7 +3,6 @@
 # The goal of the script is to separate pure vs mixed data points to do statification
 
 import itertools
-from numpy.core.fromnumeric import var
 import pandas as pd
 import numpy as np
 
@@ -20,7 +19,6 @@ while n != '111111':
         temp = "1"
         n = n[0:j]+temp+n[j+1:]
 
-value = []
 for factor in ls:
     df1 = data[data['EC1_EC2_EC3_EC4_EC5_EC6'].str.contains(factor)]
     df1.to_csv("ec_"+factor+".csv")

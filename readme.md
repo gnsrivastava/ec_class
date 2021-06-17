@@ -1,6 +1,4 @@
-# Multilabel EC Class claffification
+# Multi-label EC class claffification
 
 ## Method
-    1. **Default model run**<br>
-        - Run `python default.py`
-    
+1.   

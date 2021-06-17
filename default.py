@@ -1,10 +1,16 @@
 #!/usr/bin/python python3
 
+from math import sqrt
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
+#from skmultilearn.model_selection import iterative_train_test_split    #not working
+#from sklearn.model_selection import train_test_split          #not working
+#from sklearn.model_selection import StratifiedShuffleSplit    #not working
+from skmultilearn.model_selection import IterativeStratification
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.metrics import accuracy_score, hamming_loss, classification_report
 
 # Import Multilabel packages
@@ -17,12 +23,12 @@ from skmultilearn.adapt import MLkNN
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 
 def build_model(model, mlb_estimator, xtrain, ytrain, xtest, ytest):
     clf = mlb_estimator(model)
     clf.fit(xtrain, ytrain)
-
     #predict
     clf_prediction = clf.predict(xtest)
 
@@ -32,13 +38,94 @@ def build_model(model, mlb_estimator, xtrain, ytrain, xtest, ytest):
     results = {"accuracy": acc, "hamming loss": haml}
     return results
 
-data = pd.read_csv("training_set_2367_CIDs.csv", sep=',', index_col=0)
-data.iloc[:,123:] = data.iloc[:,123:].astype('float')
-X = data.iloc[:,0:123]
-print(X.head())
+data_train = pd.read_csv("train.csv", sep=',', index_col=0)
+data_train.iloc[:, 123:] = data_train.iloc[:, 123:].astype('float')
+X_train = np.round(np.array(data_train.iloc[:, 0:123]), decimals=2)
+#y = data.iloc[:,123:]
+y_train = np.round(np.array(data_train.iloc[:, 123:]), decimals=2)
+
+data_test = pd.read_csv("test.csv", sep=',', index_col=0)
+data_test.iloc[:, 123:] = data_test.iloc[:, 123:].astype('float')
+X_test = np.round(np.array(data_test.iloc[:, 0:123]), decimals=2)
+y_test = np.round(np.array(data_test.iloc[:, 123:]), decimals=2)
+
+# Choose max_samples:
+for n in [BinaryRelevance, ClassifierChain, LabelPowerset]:
+    for i in np.arange(0.1, 1.1, 0.1):
+        if i == 1.0:
+            i = None
+            results = build_model(RandomForestClassifier(max_samples=i),LabelPowerset, X_train, y_train, X_test, y_test)
+        else:
+            results = build_model(RandomForestClassifier(max_samples=i),LabelPowerset, X_train, y_train, X_test, y_test)
+
+        if i != None:
+            print("{} {} {}".format(str(n), round(i,2), results))
+        else:
+            print("{} {} {}".format(str(n), i, results))
+
+
+
+
+
+
+
+
+
+# k_fold = IterativeStratification(n_splits=2, order=2)
+# for train, test in k_fold.split(X, y):
+#     X_train, y_train = X[train], y[train]
+#     X_test, y_test = X[test], y[test]
+#     for n in [BinaryRelevance, ClassifierChain, LabelPowerset]:
+#         for i in [10, 50, 100, 500, 1000]:
+#             results = build_model(RandomForestClassifier(max_samples = None, max_features = 81, n_estimators=i),LabelPowerset, X_train, y_train, X_test, y_test)
+#             print("{} {} {}".format(str(n), i, results))
+
+
+
+
+    
+
+# stratified_split = StratifiedShuffleSplit(n_splits=2, test_size=0.33)
+# for train_index, test_index in stratified_split.split(data_x, y):
+#     x_train, x_test = data_x[train_index], data_x[test_index]
+#     y_train, y_test = y[train_index], y[test_index]
+
+#y = data[['EC1', 'EC2', 'EC3', 'EC4', 'EC5', 'EC6']]
+#print(X, y)
+
 # Exploratory data analysis to see how many positive counts are under each EC class
 #sns.countplot(data['EC6'])
 #plt.show()
 
+
 # train test split
-#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=data.iloc[:,123:], random_state=42)
+#print(int(sqrt(X_train.shape[0])))
+
+# Problem Transformation
+# for n in [BinaryRelevance, ClassifierChain, LabelPowerset]:
+#     for i in [10, 50, 100, 500, 1000, 1500]:
+#        results = build_model(RandomForestClassifier(n_estimators=i),LabelPowerset, X_train, y_train, X_test, y_test)
+#        print("{} {} {}".format(str(n), i, results)) 
+
+
+# Choose max_samples:
+# for n in [BinaryRelevance, ClassifierChain, LabelPowerset]:
+#     for i in np.arange(0.1, 1.1, 0.1):
+#         if i == 1.0:
+#             i = None
+#             results = build_model(RandomForestClassifier(max_samples=i),LabelPowerset, X_train, y_train, X_test, y_test)
+#         else: 
+#             results = build_model(RandomForestClassifier(max_samples=i),LabelPowerset, X_train, y_train, X_test, y_test)
+    
+#         if i != None:
+#             print("{} {} {}".format(str(n), round(i,2), results))
+#         else:
+#             print("{} {} {}".format(str(n), i, results))
+
+# mtry optimization
+
+# for n in [BinaryRelevance, ClassifierChain, LabelPowerset]:
+#     for i in range(int(sqrt(X_train.shape[1])), int(X_train.shape[1]), 10):
+#         results = build_model(RandomForestClassifier(max_features=i),LabelPowerset, X_train, y_train, X_test, y_test)
+#         print("{} {} {}".format(str(n), round(i,2), results))

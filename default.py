@@ -20,11 +20,13 @@ from skmultilearn.adapt import MLkNN
 # Import ML packages
 #pip install scikit-multilearn
 
-from sklearn.linear_model import LogisticRegression
+from mlsmote import get_minority_instace, MLSMOTE
+
+#from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB, MultinomialNB
+#from sklearn.tree import DecisionTreeClassifier
+#from sklearn.ensemble import RandomForestClassifier
+# from sklearn.naive_bayes import GaussianNB, MultinomialNB
 
 def build_model(model, mlb_estimator, xtrain, ytrain, xtest, ytest):
     clf = mlb_estimator(model)
@@ -39,29 +41,50 @@ def build_model(model, mlb_estimator, xtrain, ytrain, xtest, ytest):
     return results
 
 data_train = pd.read_csv("train.csv", sep=',', index_col=0)
-data_train.iloc[:, 123:] = data_train.iloc[:, 123:].astype('float')
-X_train = np.round(np.array(data_train.iloc[:, 0:123]), decimals=2)
+#data_train.iloc[:, 123:] = data_train.iloc[:, 123:].astype('int')
+#X_train = np.round(np.array(data_train.iloc[:, 0:123]), decimals=2)
 #y = data.iloc[:,123:]
-y_train = np.round(np.array(data_train.iloc[:, 123:]), decimals=2)
+#y_train = np.round(np.array(data_train.iloc[:, 123:]))
+X_train = data_train.iloc[:, 0:123]
+y_train = data_train.iloc[:, 123:]
+
+X_sub, y_sub = get_minority_instace(X_train, y_train)
+X_res, y_res = MLSMOTE(X_sub, y_sub, 2000)
+X_mlsmote_train = pd.DataFrame(np.concatenate((X_train, X_res), axis=0), columns=X_train.columns)
+y_mlsmote_train = pd.DataFrame(np.concatenate((y_train, y_res), axis=0), columns=y_train.columns)
 
 data_test = pd.read_csv("test.csv", sep=',', index_col=0)
-data_test.iloc[:, 123:] = data_test.iloc[:, 123:].astype('float')
-X_test = np.round(np.array(data_test.iloc[:, 0:123]), decimals=2)
-y_test = np.round(np.array(data_test.iloc[:, 123:]), decimals=2)
+#data_test.iloc[:, 123:] = data_test.iloc[:, 123:].astype('int')
+#X_test = np.round(np.array(data_test.iloc[:, 0:123]), decimals=2)
+#y_test = np.round(np.array(data_test.iloc[:, 123:]))
 
-# Choose max_samples:
+X_test = data_test.iloc[:, 0:123]
+y_test = data_test.iloc[:, 123:]
+
+X_sub_t, y_sub_t = get_minority_instace(X_test, y_test)
+X_res_t, y_res_t = MLSMOTE(X_sub_t, y_sub_t, 600)
+X_mlsmote_test = pd.DataFrame(np.concatenate((X_test, X_res_t), axis=0), columns=X_test.columns)
+y_mlsmote_test = pd.DataFrame(np.concatenate((y_test, y_res_t), axis=0), columns=y_test.columns)
+
 for n in [BinaryRelevance, ClassifierChain, LabelPowerset]:
-    for i in np.arange(0.1, 1.1, 0.1):
-        if i == 1.0:
-            i = None
-            results = build_model(RandomForestClassifier(max_samples=i),LabelPowerset, X_train, y_train, X_test, y_test)
-        else:
-            results = build_model(RandomForestClassifier(max_samples=i),LabelPowerset, X_train, y_train, X_test, y_test)
+    results = build_model(KNeighborsClassifier(n_neighbors=10), n, X_mlsmote_train, y_mlsmote_train, X_mlsmote_test, y_mlsmote_test)
+    print("{} {}".format(str(n), results))
 
-        if i != None:
-            print("{} {} {}".format(str(n), round(i,2), results))
-        else:
-            print("{} {} {}".format(str(n), i, results))
+# # Choose max_samples:
+# for n in [BinaryRelevance, ClassifierChain, LabelPowerset]:
+#     for i in np.arange(0.1, 1.1, 0.1):
+#         if i == 1.0:
+#             i = None
+#             results = build_model(RandomForestClassifier(
+#                 max_samples=i), n, X_mlsmote_train, y_mlsmote_train, X_mlsmote_test, y_mlsmote_test)
+#         else:
+#             results = build_model(RandomForestClassifier(
+#                 max_samples=i), n, X_mlsmote_train, y_mlsmote_train, X_mlsmote_test, y_mlsmote_test)
+
+#         if i != None:
+#             print("{} {} {}".format(str(n), round(i,2), results))
+#         else:
+#             print("{} {} {}".format(str(n), i, results))
 
 
 

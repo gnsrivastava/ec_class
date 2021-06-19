@@ -1,4 +1,4 @@
-# Multi-label EC class claffification
+#EC- class
 
 ## Method
 1.   
